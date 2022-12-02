@@ -1,65 +1,54 @@
-//display list of first 20 p
-import axios from "axios";
-
-async function fetchAllPokemon() {
-  try {
-    const allPokemonData = await axios.get("https://pokeapi.co/api/v2/pokemon");
-
-    if (allPokemonData.status == 200) {
-      return allPokemonData.data;
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.log("oh no we are in a pickle!");
-    console.log(error);
-  }
-}
-
-async function fetchPokemon(name) {
-  try {
-    const pokemonData = await axios.get(`https://pokeapi.co/api/v2/pokemon/${name}`);
-
-    if (pokemonData.status == 200) {
-      return pokemonData.data;
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.log("oh no we are in a pickle!");
-    console.log(error);
-  }
-}
-
-async function displayPokemon() {
-  const pokemonData = await fetchAllPokemon();
-  const pokemonContainer = document.getElementById("pokemonContainer");
-  const pokemonInfo = document.getElementById("pokemonInfo");
-  const pokemonList = document.createElement("ul");
-
-  console.log(pokemonData.results);
-
-  for (let i = 0; i < pokemonData.results.length; i++) {
-    const pokemon = pokemonData.results[i]; //an object
-
-    const pokemonListItem = document.createElement("li");
-
-    const pokemonButton = document.createElement("button");
-    pokemonButton.innerText = pokemon.name;
-    pokemonButton.addEventListener("click", async () => {
-      const currentPokemon = await fetchPokemon(pokemon.name);
-      console.log(currentPokemon);
-      const pokemonImg = document.createElement("img");
-      pokemonImg.src = currentPokemon.sprites.front_default;
-
-      pokemonInfo.append(pokemonImg);
+let weather = {
+    apiKey: "536a54d3400cc28dac6b76ec9ff50aa7",
+    fetchWeather: function (city) {
+      fetch(
+        "https://api.openweathermap.org/data/2.5/weather?q=" +
+          city +
+          "&units=metric&appid=" +
+          this.apiKey
+      )
+        .then((response) => {
+          if (!response.ok) {
+            alert("No weather found.");
+            throw new Error("No weather found.");
+          }
+          return response.json();
+        })
+        .then((data) => this.displayWeather(data));
+    },
+    displayWeather: function (data) {
+      const { name } = data;
+      const { icon, description } = data.weather[0];
+      const { temp, humidity } = data.main;
+      const { speed } = data.wind;
+      document.querySelector(".city").innerText = "Weather in " + name;
+      document.querySelector(".icon").src =
+        "https://openweathermap.org/img/wn/" + icon + ".png";
+      document.querySelector(".description").innerText = description;
+      document.querySelector(".temp").innerText = temp + "°C";
+      document.querySelector(".humidity").innerText =
+        "Humidity: " + humidity + "%";
+      document.querySelector(".wind").innerText =
+        "Wind speed: " + speed + " km/h";
+      document.querySelector(".weather").classList.remove("loading");
+      document.body.style.backgroundImage =
+        "url('https://source.unsplash.com/1600x900/?" + name + "')";
+    },
+    search: function () {
+      this.fetchWeather(document.querySelector(".search-bar").value);
+    },
+  };
+  
+  document.querySelector(".search button").addEventListener("click", function () {
+    weather.search();
+  });
+  
+  document
+    .querySelector(".search-bar")
+    .addEventListener("keyup", function (event) {
+      if (event.key == "Enter") {
+        weather.search();
+      }
     });
-
-    pokemonListItem.append(pokemonButton);
-
-    pokemonList.append(pokemonListItem);
-  }
-  pokemonContainer.append(pokemonList);
-}
-
-displayPokemon();
+  
+  weather.fetchWeather("Brooklyn");
